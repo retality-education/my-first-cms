@@ -173,6 +173,70 @@ class Article
     }
 
     /**
+     * Возвращает все (или диапазон) объекты Article из базы данных
+     *
+     * @param int $numRows Количество возвращаемых строк (по умолчанию = 1000000)
+     * @param int $categoryId Вернуть статьи только из категории с указанным ID
+     * @param string $order Столбец, по которому выполняется сортировка статей (по умолчанию = "publicationDate DESC")
+     * @return Array|false Двух элементный массив: results => массив объектов Article; totalRows => общее количество строк
+     */
+    public static function getListVersion2($numRows=1000000, 
+            $categoryId=null, $order="publicationDate DESC") 
+    {
+        $conn = new PDO(DB_DSN, DB_USERNAME, DB_PASSWORD);
+        $fromPart = "FROM articles";
+        $categoryClause = $categoryId ? "WHERE categoryId = :categoryId" : "";
+        $sql = "SELECT 
+                    id,
+                    publicationDate,
+                    categoryId,
+                    title,
+                    CASE 
+                        WHEN LENGTH(content) > 50 THEN CONCAT(SUBSTRING(content, 1, 50), '...')
+                        ELSE content
+                    END AS summary,
+                    content,
+                    UNIX_TIMESTAMP(publicationDate) AS publicationDate
+                $fromPart $categoryClause
+                ORDER BY $order LIMIT :numRows";
+        
+        $st = $conn->prepare($sql);
+        $st->bindValue(":numRows", $numRows, PDO::PARAM_INT);
+        
+        /**
+         * Можно использовать debugDumpParams() для отладки параметров, 
+         * привязанных выше с помощью bind()
+         * @see https://www.php.net/manual/ru/pdostatement.debugdumpparams.php
+         */
+        
+        if ($categoryId) 
+            $st->bindValue(":categoryId", $categoryId, PDO::PARAM_INT);
+        
+        $st->execute(); // выполняем запрос к базе данных
+        $list = array();
+
+        while ($row = $st->fetch()) {
+            $article = new Article($row);
+            $list[] = $article;
+        }
+
+        // Получаем общее количество статей, которые соответствуют критерию
+        $sql = "SELECT COUNT(*) AS totalRows $fromPart $categoryClause";
+        $st = $conn->prepare($sql);
+        if ($categoryId) 
+            $st->bindValue(":categoryId", $categoryId, PDO::PARAM_INT);
+        $st->execute(); // выполняем запрос к базе данных                    
+        $totalRows = $st->fetch();
+        $conn = null;
+        
+        return (array(
+            "results" => $list, 
+            "totalRows" => $totalRows[0]
+            ) 
+        );
+    }
+
+    /**
     * Вставляем текущий объект Article в базу данных, устанавливаем его ID
     */
     public function insert() {
