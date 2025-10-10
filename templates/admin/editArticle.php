@@ -46,6 +46,16 @@
                 <input type="date" name="publicationDate" id="publicationDate" placeholder="YYYY-MM-DD" required maxlength="10" value="<?php echo $results['article']->publicationDate ? date( "Y-m-d", $results['article']->publicationDate ) : "" ?>" />
               </li>
 
+              <li>
+                  <label for="activity">
+                      <input type="hidden" name="activity" value="0">
+                      <input type="checkbox" name="activity" id="activity" value="1" 
+                          <?php echo (isset($results['article']->activity) && $results['article']->activity == 1) ? 'checked' : 'checked'; ?> 
+                      />
+                      Article is active (visible)
+                  </label>
+                  <small>If unchecked, the article will be hidden from the site</small>
+              </li>
 
             </ul>
 

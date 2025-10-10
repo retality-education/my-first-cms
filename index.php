@@ -87,8 +87,13 @@ function homepage()
 {
     $results = array();
     $data = Article::getListVersion2(HOMEPAGE_NUM_ARTICLES);
-    $results['articles'] = $data['results'];
-    $results['totalRows'] = $data['totalRows'];
+
+    $activeArticles = array_filter($data['results'], function($article) {
+        return $article->activity == 1;
+    });
+
+    $results['articles'] = $activeArticles;
+    $results['totalRows'] = count($activeArticles);
     
     $data = Category::getList();
     $results['categories'] = array();
