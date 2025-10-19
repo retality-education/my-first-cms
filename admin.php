@@ -165,6 +165,7 @@ function newArticle() {
         $data = Category::getList();
         $results['categories'] = $data['results'];
         $results['subcategories'] = Subcategory::getList()['results'];
+        $results['users'] = User::getList()['results'];
         require( TEMPLATE_PATH . "/admin/editArticle.php" );
     }
 }
@@ -181,7 +182,6 @@ function editArticle() {
     $results['formAction'] = "editArticle";
 
     if (isset($_POST['saveChanges'])) {
-        // Проверяем соответствие категории и подкатегории
         if (isset($_POST['subcategory_id']) && $_POST['subcategory_id'] != '' && 
             isset($_POST['categoryId']) && $_POST['categoryId'] != '') {
             $subcategory = Subcategory::getById((int)$_POST['subcategory_id']);
@@ -212,6 +212,7 @@ function editArticle() {
         $data = Category::getList();
         $results['categories'] = $data['results'];
         $results['subcategories'] = Subcategory::getList()['results'];
+        $results['users'] = User::getList()['results'];
         require(TEMPLATE_PATH . "/admin/editArticle.php");
     }
 }

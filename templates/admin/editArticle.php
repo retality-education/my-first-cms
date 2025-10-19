@@ -58,7 +58,6 @@
                       }
                       echo '<optgroup label="' . htmlspecialchars($categoryName) . '">';
                       foreach ($subcats as $subcat) {
-                          // Исправлено: проверяем на null и 0
                           $selected = (isset($results['article']->subcategory_id) && $results['article']->subcategory_id == $subcat->id) ? ' selected' : '';
                           echo '<option value="' . $subcat->id . '" data-category="' . $subcat->category_id . '"' . $selected . '>' . htmlspecialchars($subcat->name) . '</option>';
                       }
@@ -66,6 +65,25 @@
                   }
                   ?>
                 </select>
+              </li>
+              <li>
+                <label for="authors">Article Authors</label>
+                <select name="authors[]" id="authors" multiple="multiple" size="6" style="min-height: 120px;">
+                <?php 
+                // Загружаем текущих авторов статьи
+                $currentAuthors = isset($results['article']->authors) ? $results['article']->authors : array();
+                foreach ( $results['users'] as $user ) { 
+                    $selected = in_array($user->id, $currentAuthors) ? ' selected="selected"' : '';
+                ?>
+                  <option value="<?php echo $user->id?>"<?php echo $selected?>><?php echo htmlspecialchars( $user->username )?></option>
+                <?php } ?>
+                </select>
+                <div style="margin-top: 5px; font-size: 0.9em; color: #666;">
+                    <strong>How to select multiple authors:</strong><br>
+                    - Windows: Hold <kbd>Ctrl</kbd> and click authors<br>
+                    - Mac: Hold <kbd>Cmd</kbd> and click authors<br>
+                    - To select range: Click first author, hold <kbd>Shift</kbd>, click last author
+                </div>
               </li>
 
               <li>

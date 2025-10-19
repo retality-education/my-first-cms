@@ -55,6 +55,11 @@ class Article
     * @var bool Acitivity of article
     */
     public $activity = null;
+
+     /**
+    * @var array Массив авторов статьи
+    */
+    public $authors = array();
     
     /**
      * Создаст объект статьи
@@ -105,6 +110,9 @@ class Article
       if (isset($data['activity'])) {
           $this->activity = $data['activity'];  
       }
+      if ( isset($params['authors']) ) {
+          $this->authors = $params['authors'];
+      }
     }
 
 
@@ -121,6 +129,10 @@ class Article
       // Разбираем и сохраняем дату публикации
       if ( isset($params['publicationDate']) ) {
         $publicationDate = explode ( '-', $params['publicationDate'] );
+
+      if ( isset($params['authors']) ) {
+          $this->authors = $params['authors'];
+      }
 
         if ( count($publicationDate) == 3 ) {
           list ( $y, $m, $d ) = $publicationDate;
@@ -167,7 +179,78 @@ class Article
         $conn = null;
         
         if ($row) { 
-            return new Article($row);
+            $article = new Article($row);
+            $article->loadAuthors();
+            return $article;
+        }
+    }
+
+
+    /**
+    * Загружает авторов для текущей статьи
+    */
+    public function loadAuthors() {
+        if ( $this->id ) {
+            $conn = new PDO( DB_DSN, DB_USERNAME, DB_PASSWORD );
+            $sql = "SELECT u.id, u.username 
+                    FROM users u 
+                    INNER JOIN article_authors aa ON u.id = aa.user_id 
+                    WHERE aa.article_id = :article_id";
+            $st = $conn->prepare($sql);
+            $st->bindValue(":article_id", $this->id, PDO::PARAM_INT);
+            $st->execute();
+            
+            $this->authors = array();
+            while ( $row = $st->fetch() ) {
+                $this->authors[] = $row['id'];
+            }
+            $conn = null;
+        }
+    }
+
+    /**
+    * Сохраняет авторов статьи
+    */
+    public function saveAuthors() {
+        // Сначала удаляем старых авторов
+        $this->deleteAuthors();
+        
+        // Затем добавляем новых
+        if ( !empty($this->authors) ) {
+            $conn = new PDO( DB_DSN, DB_USERNAME, DB_PASSWORD );
+            $sql = "INSERT INTO article_authors (article_id, user_id) VALUES ";
+            $values = array();
+            $params = array();
+            
+            foreach ( $this->authors as $index => $authorId ) {
+                $values[] = "(:article_id, :user_id_$index)";
+                $params[":user_id_$index"] = (int)$authorId;
+            }
+            
+            $sql .= implode(", ", $values);
+            $st = $conn->prepare($sql);
+            $st->bindValue(":article_id", $this->id, PDO::PARAM_INT);
+            
+            foreach ( $params as $key => $value ) {
+                $st->bindValue($key, $value, PDO::PARAM_INT);
+            }
+            
+            $st->execute();
+            $conn = null;
+        }
+    }
+
+    /**
+    * Удаляет всех авторов статьи
+    */
+    public function deleteAuthors() {
+        if ( $this->id ) {
+            $conn = new PDO( DB_DSN, DB_USERNAME, DB_PASSWORD );
+            $sql = "DELETE FROM article_authors WHERE article_id = :article_id";
+            $st = $conn->prepare($sql);
+            $st->bindValue(":article_id", $this->id, PDO::PARAM_INT);
+            $st->execute();
+            $conn = null;
         }
     }
 
@@ -236,7 +319,7 @@ class Article
                     LEFT JOIN subcategories s ON a.subcategory_id = s.id 
                     WHERE a.subcategory_id = :subcategoryId";
         $sql = "SELECT a.*, UNIX_TIMESTAMP(a.publicationDate) AS publicationDate, 
-                       c.name as category_name, s.name as subcategory_name 
+                    c.name as category_name, s.name as subcategory_name 
                 $fromPart
                 ORDER BY $order LIMIT :numRows";
 
@@ -381,6 +464,8 @@ class Article
       $st->bindValue( ":id", $this->id, PDO::PARAM_INT );
       $st->execute();
       $conn = null;
+
+       $this->saveAuthors();
     }
 
 
@@ -392,6 +477,8 @@ class Article
       // Есть ли у объекта статьи ID?
       if ( is_null( $this->id ) ) trigger_error ( "Article::delete(): Attempt to delete an Article object that does not have its ID property set.", E_USER_ERROR );
 
+      $this->deleteAuthors();
+
       // Удаляем статью
       $conn = new PDO( DB_DSN, DB_USERNAME, DB_PASSWORD );
       $st = $conn->prepare ( "DELETE FROM articles WHERE id = :id LIMIT 1" );
@@ -400,4 +487,25 @@ class Article
       $conn = null;
     }
 
+     /**
+    * Получает авторов статьи с полной информацией
+    */
+    public static function getArticleAuthors($articleId) {
+        $conn = new PDO( DB_DSN, DB_USERNAME, DB_PASSWORD );
+        $sql = "SELECT u.* 
+                FROM users u 
+                INNER JOIN article_authors aa ON u.id = aa.user_id 
+                WHERE aa.article_id = :article_id 
+                ORDER BY u.username";
+        $st = $conn->prepare($sql);
+        $st->bindValue(":article_id", $articleId, PDO::PARAM_INT);
+        $st->execute();
+        
+        $authors = array();
+        while ( $row = $st->fetch() ) {
+            $authors[] = new User($row);
+        }
+        $conn = null;
+        return $authors;
+    }
 }

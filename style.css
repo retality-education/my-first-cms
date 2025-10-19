@@ -352,3 +352,25 @@ ul.ajax-load li {
     font-size: 12px;
 }
         
+.article-meta {
+    margin: 5px 0;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.category, .subcategory, .authors {
+    font-size: 0.9em;
+}
+
+.category a, .subcategory a {
+    color: #0066cc;
+    text-decoration: none;
+}
+
+.category a:hover, .subcategory a:hover {
+    text-decoration: underline;
+}
+
+.authors {
+    font-style: italic;
+}

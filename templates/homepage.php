@@ -1,6 +1,13 @@
 <?php include "templates/include/header.php" ?>
     <ul id="headlines">
-    <?php foreach ($results['articles'] as $article) { ?>
+    <?php foreach ($results['articles'] as $article) { 
+        // Получаем авторов статьи
+        $authors = Article::getArticleAuthors($article->id);
+        $authorNames = array();
+        foreach ($authors as $author) {
+            $authorNames[] = $author->username;
+        }
+    ?>
         <li class='<?php echo $article->id?>'>
             <h2>
                 <span class="pubDate">
@@ -10,14 +17,28 @@
                 <a href=".?action=viewArticle&amp;articleId=<?php echo $article->id?>">
                     <?php echo htmlspecialchars( $article->title )?>
                 </a>
-                
-                <?php if (isset($article->categoryId)) { ?>
+            </h2>
+            
+            <div class="article-meta">
+                <?php if (isset($article->categoryId) && $article->categoryId && isset($results['categories'][$article->categoryId])) { ?>
                     <span class="category">
-                        in 
+                        Category: 
                         <a href=".?action=archive&amp;categoryId=<?php echo $article->categoryId?>">
                             <?php echo htmlspecialchars($results['categories'][$article->categoryId]->name )?>
                         </a>
                     </span>
+                    
+                    <?php if (isset($article->subcategory_id) && $article->subcategory_id) { ?>
+                        <span class="subcategory">
+                            | Subcategory: 
+                            <a href=".?action=archiveBySubcategory&amp;subcategoryId=<?php echo $article->subcategory_id?>">
+                                <?php 
+                                $subcategory = Subcategory::getById($article->subcategory_id);
+                                echo $subcategory ? htmlspecialchars($subcategory->name) : 'Unknown';
+                                ?>
+                            </a>
+                        </span>
+                    <?php } ?>
                 <?php } 
                 else { ?>
                     <span class="category">
@@ -25,18 +46,13 @@
                     </span>
                 <?php } ?>
                 
-                <?php if (isset($article->subcategory_id) && $article->subcategory_id) { ?>
-                    <span class="subcategory">
-                        / 
-                        <a href=".?action=archiveBySubcategory&amp;subcategoryId=<?php echo $article->subcategory_id?>">
-                            <?php 
-                            $subcategory = Subcategory::getById($article->subcategory_id);
-                            echo $subcategory ? htmlspecialchars($subcategory->name) : 'Unknown';
-                            ?>
-                        </a>
+                <?php if (!empty($authorNames)) { ?>
+                    <span class="authors">
+                        | Authors: <?php echo htmlspecialchars(implode(', ', $authorNames)); ?>
                     </span>
                 <?php } ?>
-            </h2>
+            </div>
+            
             <p class="summary"><?php echo htmlspecialchars($article->summary)?></p>
             <img id="loader-identity" src="JS/ajax-loader.gif" alt="gif">
             

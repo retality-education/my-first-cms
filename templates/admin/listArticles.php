@@ -17,10 +17,17 @@
               <th>Article</th>
               <th>Category</th>
               <th>Subcategory</th>
+              <th>Authors</th>
               <th>Activity</th>
             </tr>
 
-    <?php foreach ( $results['articles'] as $article ) { ?>
+    <?php foreach ( $results['articles'] as $article ) { 
+        $authors = Article::getArticleAuthors($article->id);
+        $authorNames = array();
+        foreach ($authors as $author) {
+            $authorNames[] = $author->username;
+        }
+    ?>
 
             <tr onclick="location='admin.php?action=editArticle&amp;articleId=<?php echo $article->id?>'">
               <td><?php echo date('j M Y', $article->publicationDate)?></td>
@@ -39,13 +46,15 @@
               <td>
                 <?php 
                 if(isset($article->subcategory_id) && $article->subcategory_id) {
-                    // Получаем название подкатегории
                     $subcategory = Subcategory::getById($article->subcategory_id);
                     echo $subcategory ? $subcategory->name : 'Unknown';
                 }
                 else {
                     echo "Без подкатегории";
                 }?>
+              </td>
+              <td>
+                <?php echo !empty($authorNames) ? implode(', ', $authorNames) : 'No authors'; ?>
               </td>
               <td>
                 <?php echo $article->activity == 1 ? 'активен' : 'не активен'; ?>
