@@ -26,7 +26,19 @@
                             <?php echo htmlspecialchars( $results['categories'][$article->categoryId]->name ) ?>
                         </a>
                     </span>
-                    <?php } ?>          
+                    <?php } ?>
+                    
+                    <?php if ( $article->subcategory_id ) { ?>
+                    <span class="subcategory">
+                        / 
+                        <a href=".?action=archiveBySubcategory&amp;subcategoryId=<?php echo $article->subcategory_id?>">
+                            <?php 
+                            $subcategory = Subcategory::getById($article->subcategory_id);
+                            echo $subcategory ? htmlspecialchars($subcategory->name) : 'Unknown';
+                            ?>
+                        </a>
+                    </span>
+                    <?php } ?>
                 </h2>
               <p class="summary"><?php echo htmlspecialchars( $article->summary )?></p>
             </li>

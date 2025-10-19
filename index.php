@@ -23,11 +23,38 @@ function initApplication()
         case 'viewArticle':
           viewArticle();
           break;
+        case 'archiveBySubcategory':
+          archiveBySubcategory();
+          break;
         default:
           homepage();
     }
 }
-
+function archiveBySubcategory() {
+    $results = array();
+    $subcategoryId = isset($_GET['subcategoryId']) ? (int)$_GET['subcategoryId'] : null;
+    $subcategory = Subcategory::getById($subcategoryId);
+    
+    if (!$subcategory) {
+        header("Location: index.php");
+        return;
+    }
+    
+    $data = Article::getListBySubcategory($subcategoryId);
+    $results['articles'] = $data['results'];
+    $results['totalRows'] = $data['totalRows'];
+    $results['subcategory'] = $subcategory;
+    $results['pageHeading'] = $subcategory->name;
+    $results['pageTitle'] = $subcategory->name . " | Widget News";
+    
+    $data = Category::getList();
+    $results['categories'] = array();
+    foreach ($data['results'] as $category) {
+        $results['categories'][$category->id] = $category;
+    }
+    
+    require(TEMPLATE_PATH . "/archive.php");
+}
 function archive() 
 {
     $results = [];
