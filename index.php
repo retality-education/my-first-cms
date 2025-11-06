@@ -100,8 +100,12 @@ function viewArticle()
     if (!$results['article']) {
         throw new Exception("Статья с id = $articleId не найдена");
     }
+    $data = Category::getList();
+    $results['categories'] = array();
+    foreach ($data['results'] as $category) {
+        $results['categories'][$category->id] = $category;
+    }
     
-    $results['category'] = Category::getById($results['article']->categoryId);
     $results['pageTitle'] = $results['article']->title . " | Простая CMS";
     
     require(TEMPLATE_PATH . "/viewArticle.php");
